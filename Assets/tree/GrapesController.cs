@@ -1,0 +1,104 @@
+using UnityEngine;
+using System.Collections;
+
+public class GrapesController : MonoBehaviour
+{
+    private bool isMature = false;
+    private Vector3 originalScale;
+    private Animator animator;
+    private SpriteRenderer spriteRenderer;
+    public Sprite firstStageSprite;
+
+    void Start()
+    {
+        originalScale = transform.localScale;
+        animator = GetComponent<Animator>();
+        spriteRenderer = GetComponent<SpriteRenderer>();
+
+        // ⁄‰œ »œ«Ì… «··⁄»…° «·⁄‰» Ì»œ√ «·‰„Ê
+        //  √ﬂœÌ √‰ «·⁄‰» Ì»œ√ ›Ì «·Õ«·… €Ì— «·‰«÷Ã…
+    }
+
+    // --- «·Ã“¡ «·Œ«’ »«·‰»÷ («·‰÷Ã) ---
+    public void StartPulseEffect()
+    {
+        if (isMature) return;
+        isMature = true;
+        StartCoroutine(GrapesPulseRoutine());
+    }
+
+    IEnumerator GrapesPulseRoutine()
+    {
+        while (isMature)
+        {
+            yield return ScaleTo(originalScale * 1.1f, 1.0f);
+            yield return ScaleTo(originalScale, 1.0f);
+        }
+    }
+
+    IEnumerator ScaleTo(Vector3 targetScale, float duration)
+    {
+        Vector3 startScale = transform.localScale;
+        float elapsed = 0;
+        while (elapsed < duration)
+        {
+            elapsed += Time.deltaTime;
+            transform.localScale = Vector3.Lerp(startScale, targetScale, elapsed / duration);
+            yield return null;
+        }
+    }
+
+    // --- «·Ã“¡ «·ÃœÌœ: «·Õ’«œ ⁄‰œ «·«’ÿœ«„ »«··«⁄» ---
+    void OnTriggerEnter2D(Collider2D other)
+    {
+        // Ì √ﬂœ √‰Â «··«⁄» Ê√‰ «·⁄‰» ‰«÷Ã (Ì‰»÷)
+        if (other.CompareTag("Player") && isMature)
+        {
+            HarvestGrapes();
+        }
+    }
+
+    void HarvestGrapes()
+    {
+        // 1. «·Ê’Ê· ··„œÌ— · ÕœÌÀ «·»Ì«‰« 
+        FarmUIController farmUI = Object.FindAnyObjectByType<FarmUIController>();
+
+        if (farmUI != null)
+        {
+        
+           
+
+            // “Ì«œ… «·„Œ“Ê‰ (3) -  √ﬂœÌ „‰ «”„ «·„ €Ì— ›Ì ”ﬂ—»  FarmUIController
+            farmUI.grapeValue += 3;
+
+            // “Ì«œ… «·Œ»—… (20)
+            farmUI.AddXP(20);
+
+            //  ÕœÌÀ «·Ê«ÃÂ…
+            farmUI.UpdateUI();
+        }
+
+        // 2. ≈⁄«œ…  ⁄ÌÌ‰ Õ«·… «·⁄‰»
+        isMature = false;
+        StopAllCoroutines(); // ≈Ìﬁ«› «·‰»÷
+        transform.localScale = originalScale;
+
+        // 3. ≈Ìﬁ«› «·√‰Ì„Ì‘‰ Ê«·⁄Êœ… ··‘ﬂ· «·√Ê·
+        if (animator != null) animator.enabled = false;
+        if (firstStageSprite != null) spriteRenderer.sprite = firstStageSprite;
+
+        // 4. «·«‰ Ÿ«— œﬁÌﬁ… ·»œ¡ «·‰„Ê „‰ ÃœÌœ
+        Invoke("RestartGrapesGrowth", 60f);
+    }
+
+    public void RestartGrapesGrowth()
+    {
+        if (animator != null)
+        {
+            animator.enabled = true;
+            animator.Play("GrapesAnimation", 0, 0f);
+        }
+        // »⁄œ ≈⁄«œ… «· ‘€Ì·° ‰Õ «Ã √‰ ‰” œ⁄Ì œ«·… «·‰»÷ „—… √Œ—Ï ⁄‰œ„« Ì‰÷Ã
+        // (€«·»« Ì „ «” œ⁄«ƒÂ« „‰ Œ·«· Animation Event √Ê „‰ÿﬁ ‰„Ê Œ«—ÃÌ)
+    }
+}
